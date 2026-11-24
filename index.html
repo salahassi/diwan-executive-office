@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#102f3d"><meta name="description" content="ديوان، المنصة الموحدة للمكتب التنفيذي.">
+<title>ديوان | المكتب التنفيذي</title><link rel="icon" href="mark.svg" type="image/svg+xml">
+<link rel="preload" as="font" type="font/woff" href="sans.woff" crossorigin>
+<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="meetings.css"><link rel="stylesheet" href="followup.css">
+</head>
+<body>
+<a class="skip" href="#main" onclick="event.preventDefault();document.getElementById('main').focus()">الانتقال إلى المحتوى</a><div id="scrim" onclick="toggleNav(false)" hidden></div>
+<aside id="rail" aria-label="التنقل الرئيسي"></aside>
+<div class="workspace"><header id="topbar"></header><main id="main" tabindex="-1"></main><footer class="app-footer">ديوان <span>·</span> المنصة الموحدة للمكتب التنفيذي <span>·</span> بيانات تجريبية</footer></div>
+<dialog id="dialog" aria-labelledby="dialogTitle"><div class="dialog-head"><h2 id="dialogTitle"></h2><button class="iconbtn" id="dialogClose" aria-label="إغلاق" onclick="closeModal()"></button></div><div id="dialogBody"></div></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="data.js"></script><script src="meetings.js"></script><script src="followup.js"></script><script src="app.js"></script>
+</body></html>
