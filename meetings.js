@@ -74,7 +74,7 @@ function schedulePage() {
  const date=meetNow(), start=meetWeekStart(date), records=meetPeriodMeetings(date,'day');
  const pending=meetSort(meetMeetings().filter(m=>m.invite==='pending'));
  const dateRail=Array.from({length:7},(_,i)=>{const iso=meetShift(start,i),d=meetDate(iso);const count=meetConfirmed().filter(x=>x.date===iso).length;return '<button type="button" aria-pressed="'+(iso===date)+'" data-meet-action="day" data-meet-date="'+iso+'" class="meet-day '+(iso===date?'selected':'')+'"><small>'+meetingWeekday.format(d)+'</small><b>'+d.getUTCDate()+'</b><span class="meet-day-mark '+(count?'has-meetings':'')+'"></span></button>';}).join('');
- return '<section class="meet-page"><div class="page-head meet-page-head"><div><h1>الجدولة الذكية</h1><p>جدول معالي الوزير، ودعوات الاجتماعات وتوزيع الوقت بين القطاعات.</p></div><div class="meet-actions">'+meetAct('daily',meetI('file')+'الموجز التنفيذي',{date},'btn secondary')+meetAct('calendar-import',meetI('calendar')+'استيراد من التقويم',{},'btn secondary')+meetAct('new',meetI('plus')+'إضافة اجتماع',{},'btn primary')+'</div></div><div class="meet-dashboard"><div class="panel meet-panel"><div class="meet-section-head"><div><h2>جدول الاجتماعات</h2><p>'+meetText(meetingMonthFmt.format(meetDate(date)))+'</p></div><div class="meet-navigation">'+meetAct('shift','الأسبوع السابق',{delta:-7},'meet-nav-text')+meetAct('today','اليوم',{},'meet-nav-text')+meetAct('shift','الأسبوع التالي',{delta:7},'meet-nav-text')+'</div></div><div class="meet-date-rail">'+dateRail+'</div><div class="meet-section-head meet-list-heading"><h3>'+meetText(meetDateDisplay(date))+'</h3><small>'+records.length+' اجتماعات</small></div><div>'+ (records.map(m=>meetAgendaRow(m)).join('') || meetEmpty('لا توجد اجتماعات مؤكدة في هذا اليوم.'))+'</div></div><aside class="meet-side"><div class="panel meet-panel"><div class="meet-section-head"><h2>دعوات بانتظار القرار</h2>'+meetTag(pending.length,'count')+'</div>'+ (pending.map(m=>{const clashes=meetCheckOverlap(m.date,m.time,m.duration,m.id);return '<div class="meet-invite"><div>'+meetTag(clashes.length?'تعارض في الجدول':'دعوة جديدة',clashes.length?'attention':'category')+'</div><h3>'+meetText(m.title)+'</h3><small>'+meetText(meetDateDisplay(m.date))+' · '+meetText(meetTimeDisplay(m.time))+'</small>'+meetAct('invitation','مراجعة الدعوة',{id:m.id},'meet-link')+'</div>';}).join('')||'<p class="meet-subtle">تمت مراجعة جميع الدعوات.</p>')+'</div><div class="panel meet-panel"><div class="meet-section-head"><h2>توزيع وقت معاليه</h2></div>'+meetPeriodBar(currentBriefPeriod,'chart-period')+meetTimeBars(meetPeriodMeetings(date,currentBriefPeriod))+'</div></aside></div></section>';
+ return '<section class="meet-page"><div class="page-head meet-page-head"><div><h1>الجدولة الذكية</h1><p>راجع الدعوات المتعارضة وتوزيع وقت الاجتماعات بين القطاعات.</p></div><div class="meet-actions">'+meetAct('daily',meetI('file')+'الموجز التنفيذي',{date},'btn secondary')+meetAct('calendar-import',meetI('calendar')+'استيراد من التقويم',{},'btn secondary')+meetAct('new',meetI('plus')+'إضافة اجتماع',{},'btn primary')+'</div></div><div class="meet-dashboard"><div class="panel meet-panel"><div class="meet-section-head"><div><h2>جدول الاجتماعات</h2><p>'+meetText(meetingMonthFmt.format(meetDate(date)))+'</p></div><div class="meet-navigation">'+meetAct('shift','الأسبوع السابق',{delta:-7},'meet-nav-text')+meetAct('today','اليوم',{},'meet-nav-text')+meetAct('shift','الأسبوع التالي',{delta:7},'meet-nav-text')+'</div></div><div class="meet-date-rail">'+dateRail+'</div><div class="meet-section-head meet-list-heading"><h3>'+meetText(meetDateDisplay(date))+'</h3><small>'+records.length+' اجتماعات</small></div><div>'+ (records.map(m=>meetAgendaRow(m)).join('') || meetEmpty('لا توجد اجتماعات مؤكدة في هذا اليوم.'))+'</div></div><aside class="meet-side"><div class="panel meet-panel"><div class="meet-section-head"><h2>دعوات بانتظار القرار</h2>'+meetTag(pending.length,'count')+'</div>'+ (pending.map(m=>{const clashes=meetCheckOverlap(m.date,m.time,m.duration,m.id);return '<div class="meet-invite"><div>'+meetTag(clashes.length?'تعارض في الجدول':'دعوة جديدة',clashes.length?'attention':'category')+'</div><h3>'+meetText(m.title)+'</h3><small>'+meetText(meetDateDisplay(m.date))+' · '+meetText(meetTimeDisplay(m.time))+'</small>'+meetAct('invitation','مراجعة الدعوة',{id:m.id},'meet-link')+'</div>';}).join('')||'<p class="meet-subtle">تمت مراجعة جميع الدعوات.</p>')+'</div><div class="panel meet-panel"><div class="meet-section-head"><h2>توزيع الوقت حسب القطاع</h2></div>'+meetPeriodBar(currentBriefPeriod,'chart-period')+meetTimeBars(meetPeriodMeetings(date,currentBriefPeriod))+'</div></aside></div></section>';
 }
 function meetMonthLabel(m) { return meetDateDisplay(m.date)+' · '+meetTimeDisplay(m.time); }
 function meetLibraryRecords() {
@@ -91,20 +91,20 @@ function meetLibraryCards() {
  return meetings.map(m=>'<article class="meet-library-card"><div class="meet-card-top"><span class="meet-doc-icon">'+meetI('file',23)+'</span>'+meetTag(m.finding?'يحتاج مراجعة':m.summary?'جاهز للتحضير':'بانتظار المحتوى',m.finding?'attention':'category')+'</div><div class="meet-card-main"><small>'+meetText(m.sector||'المكتب التنفيذي')+'</small><h2>'+meetText(m.title)+'</h2><p>'+meetText(m.summary||'يمكن إضافة محضر الاجتماع واستخراج التوجيهات من ملف التحضير.')+'</p></div><div class="meet-card-footer"><span>'+meetI('calendar',15)+meetText(meetDateDisplay(m.date))+'</span>'+meetAct('open','فتح الملف',{id:m.id},'meet-link')+'</div></article>').join('');
 }
 function contentPage() {
- return '<section class="meet-page"><div class="page-head meet-page-head"><div><h1>المحتوى التنفيذي</h1><p>ملفات التحضير، وملخصات العروض، والملاحظات التي تحتاج مراجعة قبل الاجتماع.</p></div></div><div class="meet-library-tools"><div class="meet-segments">'+[['all','جميع الملفات'],['today','اجتماعات اليوم'],['findings','تحتاج مراجعة']].map(([k,v])=>meetAct('library-filter',v,{filter:k},k===libraryFilter?'selected':'')).join('')+'</div><label class="meet-search">'+meetI('search',18)+'<input id="meet-library-search" type="search" placeholder="بحث في الملفات" aria-label="بحث في ملفات الاجتماعات" value="'+meetText(libraryQuery)+'"></label></div><div class="meet-library-grid" id="meet-library-records">'+meetLibraryCards()+'</div></section>';
+ return '<section class="meet-page"><div class="page-head meet-page-head"><div><h1>المحتوى التنفيذي</h1><p>ملفات التحضير، وملخصات العروض، والملاحظات التي تحتاج مراجعة قبل الاجتماع.</p></div><div class="meet-actions">'+meetAct('studio-home',meetI('sparkles',17)+'فتح محلّل المكتب',{},'btn primary')+'</div></div><div class="meet-library-tools"><div class="meet-segments">'+[['all','جميع الملفات'],['today','اجتماعات اليوم'],['findings','تحتاج مراجعة']].map(([k,v])=>meetAct('library-filter',v,{filter:k},k===libraryFilter?'selected':'')).join('')+'</div><label class="meet-search">'+meetI('search',18)+'<input id="meet-library-search" type="search" placeholder="بحث في الملفات" aria-label="بحث في ملفات الاجتماعات" value="'+meetText(libraryQuery)+'"></label></div><div class="meet-library-grid" id="meet-library-records">'+meetLibraryCards()+'</div></section>';
 }
 function meetRecommendation(m) {
  if(m.recommendation) return m.recommendation;
- const stakeholder=(m.people||[]).find(person=>person!=='معالي الوزير');
  const category=String(m.category||'');
- if(category.includes('استراتيج')) return 'يوصى بحضور معالي الوزير لحسم الأولويات المشتركة، بحضور ممثل '+(m.sector||'القطاع المعني')+' لتوضيح أثر القرار.';
- if(category.includes('تشغيل'))return 'يمكن تفويض ممثل '+(m.sector||'القطاع المعني')+' للمتابعة التشغيلية، ورفع القرارات التي تتطلب توجيه معالي الوزير.';
- return 'يوصى بمشاركة '+(stakeholder||'ممثل القطاع المعني')+' لعرض مؤشرات الأداء وتوثيق القرار المطلوب.';
+ const sector=m.sector||'القطاع المعني';
+ if(category.includes('استراتيج')) return 'تحتاج البنود الاستراتيجية إلى صاحب صلاحية القرار وممثل '+sector+' لعرض أثر البدائل.';
+ if(category.includes('تشغيل'))return 'يمكن إسناد المتابعة التشغيلية إلى ممثل '+sector+' وإحالة البنود التي تحتاج اعتمادًا إلى رئيس الاجتماع.';
+ return 'يُقترح إشراك ممثل '+sector+' لشرح مؤشرات الأداء وتوثيق القرار المطلوب.';
 }
 function meetPeople(m) {const p=m.people||[];return p.length?p.map(x=>meetTag(x)).join(''):'<span class="meet-subtle">لم يُحدَّد الحضور بعد.</span>';}
 function meetAgenda(m) {return m.agenda?.length?'<ol class="meet-ordered">'+m.agenda.map(a=>'<li>'+meetText(a)+'</li>').join('')+'</ol>':'<p class="meet-subtle">لم يضف المكتب بنودًا إلى جدول الأعمال بعد.</p>';}
 function meetBriefTab(m) {
- return '<div class="meet-highlight"><div class="meet-label">'+meetI('sparkles',17)+'الموجز التنفيذي</div><p>'+meetText(m.summary || 'لم يُضف ملخص لهذا الاجتماع بعد.')+'</p></div><section class="meet-block"><h3>محاور النقاش</h3>'+meetAgenda(m)+'</section><section class="meet-block"><h3>توصية الحضور</h3><p>'+meetText(meetRecommendation(m))+'</p><div class="meet-chips">'+meetPeople(m)+'</div></section>';
+ return '<div class="meet-highlight"><div class="meet-label">'+meetI('file',17)+'الموجز التنفيذي</div><p>'+meetText(m.summary || 'لم يُضف ملخص لهذا الاجتماع بعد.')+'</p></div><div class="meet-ai-shortcut">'+meetAct('precedents',meetI('search',16)+'استرجاع السوابق',{id:m.id},'btn secondary')+'</div><section class="meet-block"><h3>محاور النقاش</h3>'+meetAgenda(m)+'</section><section class="meet-block"><h3>توصية الحضور</h3><p>'+meetText(meetRecommendation(m))+'</p><div class="meet-chips">'+meetPeople(m)+'</div></section>';
 }
 function meetFinding(m) {
  const f=m.finding;
@@ -113,21 +113,61 @@ function meetFinding(m) {
  return '<div class="meet-finding"><div class="meet-label">'+meetI('alert',18)+'نقطة تحتاج التحقق</div><h3>'+meetText(f.title)+'</h3>'+comparison+'<p>'+meetText(f.detail)+'</p><div class="meet-source"><strong>المصدر المرجعي</strong><span>'+meetText(f.source||'العرض المرفق بالاجتماع')+'</span></div></div>';
 }
 function meetAnalysisTab(m) {
- const val=m.value || (m.summary?'يخدم العرض مناقشة «'+(m.agenda?.[0]||m.title)+'». يُستحسن تثبيت المطلوب من الاجتماع قبل اعتماد المخرجات.':'تظهر المرئيات عند إضافة مواد الاجتماع.');
- return meetFinding(m)+meetMaterials(m)+'<section class="meet-block"><h3>قيمة العرض وأهمية الاجتماع</h3><p>'+meetText(val)+'</p></section><section class="meet-block"><h3>سؤال مقترح لمعاليه</h3><p>'+meetText(m.question||(m.finding?'ما الرقم المعتمد، ومن يتولى توحيد المرجع قبل إصدار التوجيه؟':'ما القرار المطلوب اليوم، وما المؤشر الذي يثبت تنفيذه؟'))+'</p></section>';
+ const question=m.question||(m.finding?'أيّ المصدرين يُعتمد، ومن يتولى التحقق من القياس؟':'ما الإجراء الذي يستدعي اعتمادًا بعد مراجعة المواد؟');
+ const compare=meetAct('studio',meetI('sparkles',17)+'مقارنة الأرقام في محلّل المكتب',{id:m.id,mode:'compare'},'btn secondary');
+ return meetFinding(m)+'<div class="meet-ai-shortcut">'+compare+'</div>'+meetMaterials(m)+
+  (m.value?'<section class="meet-block"><h3>أهمية العرض</h3><p>'+meetText(m.value)+'</p></section>':'')+
+  '<section class="meet-block"><h3>سؤال مقترح للنقاش</h3><p>'+meetText(question)+'</p></section>';
 }
 function meetSeedMinutes(m) {
- if(m.minutes!==undefined)return m.minutes;
- if(m.transcript)return String(m.transcript);
- if(!m.summary)return '';
- if(m.id==='m-housing')return 'استعرضت اللجنة نسب الإنجاز للدفعة الأولى واختلاف بيانات العرض عن نتائج التحقق الميداني.\nوجّه معالي الوزير قطاع الإسكان بمطابقة نسب إنجاز الدفعة الأولى مع تقرير التحقق الميداني ورفع النسبة المعتمدة قبل تثبيت موعد التسليم.';
- return '';
+ if(m.minutes!==undefined)return String(m.minutes||'');
+ return String(m.transcript||'');
+}
+function meetMinutesResults(m, linked) {
+ const report=m.minuteReview;
+ if(!report) {
+  return m.extractionDone ? '<p class="meet-subtle">أعد تحليل المحضر لعرض النتائج المرتبطة بعبارات المصدر.</p>' : '';
+ }
+ const counts={action:0,decision:0,risk:0};
+ const entries=report.items||[];
+ entries.forEach(item=>{if(Object.hasOwn(counts,item.kind))counts[item.kind]++;});
+ const labels={action:'تكليف',decision:'قرار',risk:'مخاطر'};
+ const countBar=Object.keys(labels).map(k=>'<span><b>'+counts[k]+'</b> '+labels[k]+'</span>').join('');
+ const summary=(report.brief||[]).map(sentence=>'<li>'+meetText(sentence)+'</li>').join('');
+ const otherEvidence=entries.filter(item=>item.kind==='decision'||item.kind==='risk').map(item=>
+  '<li><small>'+meetText(item.kind==='decision'?'قرار':'مخاطر')+' · العبارة '+(item.sentenceIndex+1)+'</small><p>«'+meetText(item.text)+'»</p></li>').join('');
+ const linkedAlready=text=>linked.some(d=>d.title===text||d.sourceText===text);
+ const proposals=entries.map((item,i)=>{
+  if(item.kind!=='action')return '';
+  const source='المحضر · العبارة '+(item.sentenceIndex+1);
+  const fields=[item.owner&&'الجهة الواردة: '+item.owner,item.deadline&&'الموعد الوارد: '+item.deadline].filter(Boolean).join(' · ');
+  const issueButton=linkedAlready(item.text)?meetTag('أُضيف إلى سجل المتابعة','category'):meetAct('issue','مراجعة وإسناد',{id:m.id,index:i},'meet-link');
+  return '<div class="meet-candidate"><div><small>'+meetText(source)+'</small><p>«'+meetText(item.text)+'»</p>'+(fields?'<small>'+meetText(fields)+'</small>':'')+'</div>'+issueButton+'</div>';
+ }).join('');
+ return '<section class="meet-block meet-minute-result" id="meet-reviewed"><div class="meet-section-head"><h3>'+meetI('sparkles',17)+' نتائج التحليل</h3></div><div class="meet-ai-counts">'+countBar+'</div>'+
+  (report.truncated?'<p class="meet-subtle">يتجاوز المحضر حدود التحليل المحلي. قسّمه إلى مقاطع لمراجعة بقية النص.</p>':'')+
+  (summary?'<h4>موجز من المحضر</h4><ul class="meet-brief-source">'+summary+'</ul>':'')+
+  '<h4>التكليفات المقترحة</h4>'+(proposals||'<p class="meet-subtle">لم يتعرّف النموذج على تكليف صريح في النص.</p>')+
+  (otherEvidence?'<details class="meet-comparison-proof"><summary>شواهد القرارات والمخاطر</summary><ul class="meet-brief-source">'+otherEvidence+'</ul></details>':'')+'</section>';
 }
 function meetMinutesTab(m) {
  const text=meetSeedMinutes(m);
- const candidates=Array.isArray(m.extracted)?m.extracted:[];
  const linked=(S.directives||[]).filter(d=>String(d.meetingId)===String(m.id));
- return '<div class="meet-note-header"><h3>محضر الاجتماع</h3><small>'+(m.minutes===undefined && text?'نص تجريبي قابل للتعديل':'نص قابل للتعديل')+'</small></div><label class="meet-text-label" for="meet-minutes">نص المحضر</label><textarea class="meet-input" id="meet-minutes" rows="4" placeholder="أدخل المحضر، بما فيه نص التكليف والجهة المعنية.">'+meetText(text)+'</textarea><div class="meet-actions meet-note-actions">'+meetAct('extract',meetI('sparkles',16)+'استخراج التوجيهات',{id:m.id},'btn primary')+meetAct('save-minutes','حفظ المحضر',{id:m.id},'btn secondary')+'</div>'+ (m.extractionDone?'<section class="meet-block"><h3>التوجيهات المقترحة</h3>'+(candidates.length?candidates.map((title,i)=>{const exists=linked.some(d=>d.title===title||d.sourceText===title);return '<div class="meet-extracted"><p>'+meetText(title)+'</p>'+(exists?meetTag('أُضيف إلى سجل المتابعة','category'):meetAct('issue','مراجعة وإسناد',{id:m.id,index:i},'meet-link'))+'</div>';}).join(''):'<p class="meet-subtle">لم يُعثر على تكليف صريح. أضف نص التوجيه أو أنشئه يدويًا.</p>')+'</section>':'')+'<section class="meet-block"><div class="meet-section-head"><h3>توجيهات مرتبطة بالاجتماع</h3>'+meetAct('manual','إضافة توجيه',{id:m.id},'meet-link')+'</div>'+(linked.length?linked.map(d=>'<div class="meet-extracted"><p>'+meetText(d.title)+'</p>'+meetTag(d.status)+'</div>').join(''):'<p class="meet-subtle">لم يصدر توجيه مرتبط بهذا الاجتماع بعد.</p>')+'</section>';
+ const related=linked.map(d=>'<div class="meet-extracted"><p>'+meetText(d.title)+'</p>'+meetTag(d.status)+'</div>').join('');
+ return '<div class="meet-note-header"><h3>محضر الاجتماع</h3><small>'+(m.minutes===undefined&&text?'محضر تجريبي قابل للتعديل':'نص قابل للتعديل')+'</small></div>'+
+  '<label class="meet-text-label" for="meet-minutes">نص المحضر</label><textarea class="meet-input" id="meet-minutes" rows="5" placeholder="الصق نص المحضر. يتعرّف النموذج على التكليفات والقرارات والمخاطر.">'+meetText(text)+'</textarea>'+
+  '<div class="meet-actions meet-note-actions">'+meetAct('extract',meetI('sparkles',16)+'تحليل المحضر بالذكاء الاصطناعي',{id:m.id},'btn primary')+meetAct('save-minutes','حفظ المحضر',{id:m.id},'btn secondary')+'</div>'+
+  meetMinutesResults(m,linked)+'<div class="meet-ai-shortcut">'+meetAct('studio','فتح المحضر في محلّل المكتب',{id:m.id,mode:'minutes'},'meet-link')+'</div>'+
+  '<section class="meet-block"><div class="meet-section-head"><h3>توجيهات مرتبطة بالاجتماع</h3>'+meetAct('manual','إضافة توجيه',{id:m.id},'meet-link')+'</div>'+
+  (related||'<p class="meet-subtle">لم يصدر توجيه مرتبط بهذا الاجتماع بعد.</p>')+'</section>';
+}
+function meetSetMinutes(m,raw) {
+ if(m.minutes!==raw) {
+  delete m.minuteReview;
+  delete m.extracted;
+  delete m.extractionDone;
+ }
+ m.minutes=raw;
 }
 function openMeeting(id,tab='brief') {
  const m=meetFind(id); if(!m){toast('تعذّر العثور على الاجتماع');return;}
@@ -144,7 +184,7 @@ function openInvitation(id) {
  if(m.invite!=='pending'){openMeeting(id);return;}
  const clashes=meetCheckOverlap(m.date,m.time,m.duration,m.id);
  const slot=clashes.length?meetNextSlot(m.date,m.time,m.duration,m.id):null;
- const decision=clashes.length?'<div class="meet-finding"><div class="meet-label">'+meetI('alert',18)+'تعارض في الموعد المقترح</div><p>'+clashes.map(x=>meetText(x.title)+' ('+meetText(meetTimeDisplay(x.time))+')').join('، ')+'</p>'+(slot?'<p><strong>الموعد البديل المقترح</strong> · '+meetText(meetDateDisplay(slot.date))+'، '+meetText(meetTimeDisplay(slot.time))+'</p>':'<p>يمكن رفض الدعوة أو اختيار موعد يدوي عند الجدولة.</p>')+'</div>':'<div class="meet-highlight"><div class="meet-label">'+meetI('check',16)+'الوقت متاح في جدول معاليه</div></div>';
+ const decision=clashes.length?'<div class="meet-finding"><div class="meet-label">'+meetI('alert',18)+'تعارض في الموعد المقترح</div><p>'+clashes.map(x=>meetText(x.title)+' ('+meetText(meetTimeDisplay(x.time))+')').join('، ')+'</p>'+(slot?'<p><strong>الموعد البديل المقترح</strong> · '+meetText(meetDateDisplay(slot.date))+'، '+meetText(meetTimeDisplay(slot.time))+'</p>':'<p>يمكن رفض الدعوة أو اختيار موعد يدوي عند الجدولة.</p>')+'</div>':'<div class="meet-highlight"><div class="meet-label">'+meetI('check',16)+'الموعد متاح في جدول الاجتماعات</div></div>';
  modal('مراجعة الدعوة','<div class="meet-dialog"><h3>'+meetText(m.title)+'</h3><div class="meet-meta"><span>'+meetI('calendar',16)+meetText(meetMonthLabel(m))+'</span><span>'+meetText(meetDuration(Number(m.duration||30)))+'</span></div>'+decision+'<section class="meet-block"><h3>توصية الحضور</h3><p>'+meetText(meetRecommendation(m))+'</p></section><div class="meet-actions">'+(!clashes.length||slot?meetAct('accept',clashes.length?'اعتماد الموعد البديل':'قبول الدعوة',{id:m.id},'btn primary'):'')+meetAct('decline','اعتذار عن الدعوة',{id:m.id},'btn secondary')+'</div></div>');
 }
 function openDailyBrief(period='day',date) {
@@ -152,7 +192,7 @@ function openDailyBrief(period='day',date) {
  if(!['day','week','month'].includes(period))period='day';
  const records=meetPeriodMeetings(iso,period), total=records.reduce((s,m)=>s+Number(m.duration||30),0);
  const findings=records.filter(m=>m.finding);
- modal('الموجز التنفيذي للجدول','<div class="meet-dialog"><div class="meet-section-head"><p>'+meetText(meetRangeText(iso,period))+'</p>'+meetPeriodBar(period,'brief-period')+'</div><div class="meet-brief-metrics"><div><b>'+records.length+'</b><small>اجتماعات مؤكدة</small></div><div><b>'+total+'</b><small>دقائق مجدولة</small></div><div><b>'+findings.length+'</b><small>ملفات تحتاج مراجعة</small></div></div><section class="meet-block"><h3>أبرز الاجتماعات</h3>'+ (records.map(m=>meetAgendaRow(m,period!=='day')).join('')||meetEmpty('لا توجد اجتماعات لهذه الفترة.'))+'</section><section class="meet-block"><h3>توزيع الوقت حسب القطاع</h3>'+meetTimeBars(records)+'</section></div>');
+ modal('الموجز التنفيذي للجدول','<div class="meet-dialog"><div class="meet-section-head"><p>'+meetText(meetRangeText(iso,period))+'</p>'+meetPeriodBar(period,'brief-period')+'</div><div class="meet-brief-metrics"><div><b>'+records.length+'</b><small>اجتماعات مؤكدة</small></div><div><b>'+total+'</b><small>دقائق مجدولة</small></div><div><b>'+findings.length+'</b><small>ملفات تحتاج مراجعة</small></div></div>'+officeBriefInsights(records)+'<section class="meet-block"><h3>أبرز الاجتماعات</h3>'+ (records.map(m=>meetAgendaRow(m,period!=='day')).join('')||meetEmpty('لا توجد اجتماعات لهذه الفترة.'))+'</section><section class="meet-block"><h3>توزيع الوقت حسب القطاع</h3>'+meetTimeBars(records)+'</section></div>');
  const periodButtons=document.querySelectorAll('[data-meet-action="brief-period"]');periodButtons.forEach(b=>b.dataset.meetDate=iso);
 }
 function newMeeting(defaults={}) {
@@ -184,6 +224,7 @@ document.addEventListener('submit',e=>{
 });
 document.addEventListener('input',e=>{
  const el=e.target;
+ if(el.id==='meet-minutes'){const result=document.getElementById('meet-reviewed');if(result)result.hidden=true;}
  if(el.id==='meet-library-search'){libraryQuery=el.value;const list=document.getElementById('meet-library-records');if(list)list.innerHTML=meetLibraryCards();}
  if(el.form?.id==='meet-new-form'&&['date','time','duration'].includes(el.name))meetNewConflict(el.form);
 });
@@ -192,6 +233,8 @@ document.addEventListener('click',e=>{
  const a=b.dataset.meetAction,id=b.dataset.meetId,m=id?meetFind(id):null;
  if(a==='open')openMeeting(id,b.dataset.meetTab||'brief');
  if(a==='invitation')openInvitation(id);
+ if(a==='studio-home')openAIWorkspace();
+ if(a==='precedents'&&m)openPrecedents(m.id);
  if(a==='day'||a==='shift'||a==='today'){scheduleDay=a==='today'?today:a==='shift'?meetShift(meetNow(),Number(b.dataset.meetDelta)):b.dataset.meetDate;render();}
  if(a==='daily'||a==='brief-period')openDailyBrief(b.dataset.meetPeriod||'day',b.dataset.meetDate);
  if(a==='chart-period'){currentBriefPeriod=b.dataset.meetPeriod;render();}
@@ -205,17 +248,37 @@ document.addEventListener('click',e=>{
  }
  if(a==='decline'&&m?.invite==='pending'){m.invite='declined';persist();closeModal();render();toast('سُجّل الاعتذار عن الدعوة');}
  if(a==='use-slot'){const form=b.closest('form');if(form){form.elements.date.value=b.dataset.meetDate;form.elements.time.value=b.dataset.meetTime;meetNewConflict(form);}}
- if((a==='extract'||a==='save-minutes')&&m){const input=document.getElementById('meet-minutes');if(!input)return;const raw=input.value.trim();if(!raw&&a==='extract'){toast('أدخل نص المحضر أولًا');return;}
-  if(m.minutes!==raw){m.extracted=[];m.extractionDone=false;}
-  m.minutes=raw;
-  if(a==='extract'){const lines=raw.split(/[\n.؛؟]+/).map(s=>s.trim()).filter(Boolean);
-   m.extracted=[...new Set(lines.filter(s=>/(وجّه|وجه|يوجّه|يوجه|تكليف|كلّف|كلف|تكل[يّ]ف|تتولى|يتولى|طلب معالي|إعداد|رفع تقرير|تزويد|اعتماد خطة|متابعة تنفيذ)/.test(s)))];m.extractionDone=true;}
-  persist();openMeeting(id,'minutes');toast(a==='extract'?'اكتملت مراجعة المحضر التجريبي':'حُفظ المحضر');
+ if(a==='studio'&&m) {
+  const editor=document.getElementById('meet-minutes');
+  if(editor&&b.dataset.meetMode==='minutes') {meetSetMinutes(m,editor.value.trim());persist();}
+  closeModal();
+  openAIWorkspace(m.id,b.dataset.meetMode);
  }
- if((a==='issue'||a==='manual')&&m){
-  const title=a==='issue'?(m.extracted||[])[Number(b.dataset.meetIndex)]||'':'';
-  newDirective({title,sourceText:title,meetingId:m.id,owner:m.sector||''});
+ if((a==='extract'||a==='save-minutes')&&m) {
+  const editor=document.getElementById('meet-minutes');
+  if(!editor)return;
+  const raw=editor.value.trim();
+  if(a==='extract'&&!raw){toast('أدخل نص المحضر أولًا');return;}
+  meetSetMinutes(m,raw);
+  if(a==='extract') {
+   const report=window.DiwanAI.analyze(raw);
+   const items=report.items.filter(item=>['action','decision','risk'].includes(item.kind)&&item.text&&raw.includes(item.text));
+   m.minuteReview={items,brief:report.brief.filter(line=>line&&raw.includes(line)),truncated:report.truncated};
+  }
+  persist();openMeeting(id,'minutes');toast(a==='extract'?'اكتمل تحليل نص المحضر':'حُفظ المحضر');
  }
+ if(a==='issue'&&m) {
+  const candidate=m.minuteReview?.items[Number(b.dataset.meetIndex)];
+  const raw=document.getElementById('meet-minutes')?.value.trim();
+  if(!candidate||candidate.kind!=='action'||raw!==m.minutes||!raw.includes(candidate.text)) {
+   toast('حلّل النص الحالي قبل مراجعة التكليف.');return;
+  }
+  if((S.directives||[]).some(d=>d.meetingId===m.id&&(d.title===candidate.text||d.sourceText===candidate.text))) {
+   openMeeting(m.id,'minutes');return;
+  }
+  newDirective({title:candidate.text.slice(0,400),sourceText:candidate.text,meetingId:m.id,owner:candidate.owner||'',deadline:candidate.deadline||'',aiDraft:true});
+ }
+ if(a==='manual'&&m)newDirective({meetingId:m.id,owner:m.sector||''});
 });
 
 /* Text is processed in the browser. Only the extracted excerpts stay with the meeting. */
@@ -224,7 +287,7 @@ function meetMaterials(m) {
  const compare=m.documentFindings || [];
  return '<section class="meet-block meet-materials"><div class="meet-section-head"><h3>مواد الاجتماع</h3><label class="meet-filepick btn secondary">'+meetI('plus',16)+'إرفاق مادة<input aria-label="إرفاق عرض أو ملف نصي بالاجتماع" type="file" accept=".pptx,.txt" data-meet-file="'+meetText(m.id)+'"></label></div><small class="meet-subtle">يمكن قراءة نصوص شرائح PowerPoint أو ملف نصّي داخل المتصفح (حتى 8 م.ب.).</small><div id="meet-file-status" role="status"></div>'+
   docs.map(doc=>'<details class="meet-document"><summary><span>'+meetI('file',16)+meetText(doc.name)+'</span><small>'+doc.pages.length+' '+(doc.type==='pptx'?'شرائح مقروءة':'مقاطع')+'</small></summary>'+doc.pages.map(p=>'<div class="meet-source-excerpt"><b>'+meetText(p.label)+'</b><p>'+meetText(p.text)+'</p></div>').join('')+'</details>').join('')+
-  (compare.length?'<div class="meet-file-results"><h3>ملاحظات من المواد المرفقة</h3>'+compare.map(f=>'<div class="meet-finding"><strong>'+meetText(f.title)+'</strong><p>'+meetText(f.detail)+'</p><small>'+meetText(f.source)+'</small></div>').join('')+'</div>':'')+'</section>';
+  (compare.length?'<div class="meet-file-results"><h3>ملاحظات من المواد المرفقة</h3>'+compare.map(f=>'<div class="meet-finding"><strong>'+meetText(f.title)+'</strong><p>'+meetText(f.detail)+'</p><small>'+meetText(f.source)+'</small>'+(f.evidence?.length?'<details class="meet-comparison-proof"><summary>عرض عبارتي المصدر</summary>'+f.evidence.map(e=>'<blockquote><small>'+meetText(e.ref)+'</small><p>'+meetText(e.quote)+'</p></blockquote>').join('')+'</details>':'')+'</div>').join('')+'</div>':'')+'</section>';
 }
 function meetParsePlain(text) {
  const paragraphs=text.replace(/\r/g,'').trim().split(/\n\s*\n/).filter(Boolean);
@@ -271,21 +334,52 @@ async function meetReadPresentation(file) {
  return parsed;
 }
 function meetCheckDocuments(docs) {
- const metrics=new Map(), results=[];
- for(const doc of docs)for(const p of doc.pages){
-  const normalized=p.text.replace(/[٠-٩]/g,v=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(v))).replace(/٫/g,'.');
-  const pattern=/(نسبة\s+(?:الإنجاز|الانجاز|الإشغال|الإغلاق|الالتزام|الرضا|التغطية|الاكتمال|التسليم)|معدل\s+(?:الإنجاز|الانجاز|الإغلاق|الالتزام|الرضا|الإشغال))[^\n،؛.\d]{0,35}(\d+(?:\.\d+)?)\s*[%٪]/g;
-  for(const [,metric,value] of normalized.matchAll(pattern)){
-   const label=metric.replace(/الانجاز/g,'الإنجاز').replace(/\s+/g,' ');
-   const source=doc.name+'، '+p.label;
-   const previous=metrics.get(label);
-   if(previous && previous.source!==source && Number(previous.value)!==Number(value) && !results.some(x=>x.label===label)){
-    results.push({label,title:'تباين محتمل في '+label,detail:'وردت قيمة '+previous.value+'% وقيمة '+value+'% للمؤشر نفسه. راجع الفترة والنطاق في المصدرين قبل اعتماد المقارنة.',source:previous.source+' • '+source});
-   } else if(!previous)metrics.set(label,{value,source});
+ const extracts=[];
+ const findings=[];
+ const seen=new Set();
+ for(const doc of docs) {
+  for(const page of doc.pages||[]) {
+   const records=window.DiwanCompare.extract(page.text);
+   if(!records.length)continue;
+   const reference=doc.name+'، '+page.label;
+   for(const previous of extracts) {
+    const comparison=window.DiwanCompare.compareExtracted(previous.records,records);
+    for(const issue of comparison.issues) {
+     const key=JSON.stringify([issue.metric,issue.firstQuote,issue.secondQuote]);
+     if(seen.has(key))continue;
+     seen.add(key);
+     findings.push({
+      fromMaterials:true,
+      title:'تباين في '+issue.metric,
+      detail:'وردت '+issue.firstValue+' في المصدر الأول و'+issue.secondValue+' في الثاني، بفارق '+issue.delta+'.',
+      source:previous.reference+' • '+reference,
+      evidence:[{ref:previous.reference,quote:issue.firstQuote},{ref:reference,quote:issue.secondQuote}]
+     });
+     if(findings.length===6)return findings;
+    }
+   }
+   extracts.push({reference,records});
   }
  }
- return results.slice(0,6);
+ return findings;
 }
+function meetUpdateDocumentFindings(m,findings) {
+ const previous=m.documentFindings||[];
+ const wasFromMaterials=m.finding?.fromMaterials||previous.some(item=>item.title===m.finding?.title&&item.source===m.finding?.source);
+ m.documentFindings=findings;
+ if(wasFromMaterials||!m.finding) {
+  if(findings.length)m.finding=findings[0];
+  else delete m.finding;
+ }
+ m.materialAnalysisVersion=2;
+}
+document.addEventListener('DOMContentLoaded',()=>{
+ const legacy=meetMeetings().filter(m=>m.documents?.length&&m.materialAnalysisVersion!==2);
+ if(!legacy.length)return;
+ for(const m of legacy)meetUpdateDocumentFindings(m,meetCheckDocuments(m.documents));
+ persist();
+ render();
+});
 document.addEventListener('change',async event=>{
  const input=event.target;
  if(!input.matches?.('input[data-meet-file]'))return;
@@ -303,8 +397,7 @@ document.addEventListener('change',async event=>{
   if(!pages.length)throw Error('لم يُعثر على نص قابل للقراءة في المادة. يمكن إرفاق نسخة نصية.');
   const doc={name:file.name,type,pages};
   const docs=[...(m.documents||[]),doc];const findings=meetCheckDocuments(docs);
-  m.documents=docs;m.documentFindings=findings;
-  if(!m.finding && findings.length)m.finding=findings[0];
+  m.documents=docs;meetUpdateDocumentFindings(m,findings);
   persist();render();
   if(input.isConnected)openMeeting(m.id,'analysis');
   toast('أُرفقت المادة بملف الاجتماع');
@@ -385,7 +478,7 @@ function meetImportPlan(records, selected) {
 }
 function meetStartCalendarImport(){
  meetImportReview=[];
- modal('استيراد من التقويم','<div class="meet-dialog"><div class="meet-highlight"><div class="meet-label">'+meetI('calendar',18)+'إضافة مواعيد من ملف تقويم</div><p>صدّر المواعيد بصيغة ICS من تقويم معاليه، ثم اختر الملف لمراجعتها بتوقيت الرياض. تُحفظ المواعيد المعتمدة كنسخ محلية في النموذج.</p></div><p class="meet-subtle meet-import-note">تدعم المعاينة الاجتماعات المفردة ذات وقت البداية. تُستبعد المواعيد اليومية والمتكررة والملغاة.</p><label class="meet-filepick btn primary">اختيار ملف تقويم<input type="file" id="meet-ics-file" aria-label="اختيار ملف تقويم" accept=".ics,text/calendar"></label><div class="meet-import-note" role="status" id="meet-ics-status"></div></div>');
+ modal('استيراد من التقويم','<div class="meet-dialog"><div class="meet-highlight"><div class="meet-label">'+meetI('calendar',18)+'إضافة مواعيد من ملف تقويم</div><p>صدّر المواعيد بصيغة ICS من التقويم، ثم اختر الملف لمراجعتها بتوقيت الرياض. تُحفظ المواعيد المعتمدة كنسخ محلية في النموذج.</p></div><p class="meet-subtle meet-import-note">تدعم المعاينة الاجتماعات المفردة ذات وقت البداية. تُستبعد المواعيد اليومية والمتكررة والملغاة.</p><label class="meet-filepick btn primary">اختيار ملف تقويم<input type="file" id="meet-ics-file" aria-label="اختيار ملف تقويم" accept=".ics,text/calendar"></label><div class="meet-import-note" role="status" id="meet-ics-status"></div></div>');
 }
 function meetReviewCalendar(list, skipped){
  meetImportReview=list;

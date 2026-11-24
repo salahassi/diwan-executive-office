@@ -71,7 +71,7 @@ function followStats() {
 }
 function directivesPage() {
   const filters = ['الكل', ...officeFollow.statuses, 'تستحق المتابعة'];
-  return '<div class="fo-page">' + followHead('التوجيهات', 'تابع التوجيهات الصادرة عن معالي الوزير من الإسناد حتى اكتمال التنفيذ.', '<button class="btn primary" onclick="newDirective()">' + followIcon('add') + 'إصدار توجيه</button>') +
+  return '<div class="fo-page">' + followHead('التوجيهات', 'تابع التوجيهات الصادرة عن المكتب من الإسناد حتى اكتمال التنفيذ.', '<button class="btn primary" onclick="newDirective()">' + followIcon('add') + 'إصدار توجيه</button>') +
     followStats() + '<section class="panel fo-panel"><div class="fo-sectionhead"><div><h2>سجل التوجيهات</h2></div><label class="fo-search">' + followIcon('search', 18) + '<input id="fo-dir-search" aria-label="البحث في التوجيهات" placeholder="ابحث بالموضوع أو الجهة" oninput="followDrawDirectives()"></label></div>' +
     '<div class="fo-tabs" id="fo-dir-tabs">' + filters.map(x => followTab(x, officeFollow.directiveFilter, 'followFilterDirectives')).join('') + '</div><div id="fo-dir-rows">' + followDirectiveRows('') + '</div></section></div>';
 }
@@ -93,7 +93,7 @@ function followDirectiveRows(query) {
   if (!list.length) return followEmpty('لا توجد توجيهات تطابق البحث أو التصفية.');
   return '<div class="fo-table"><div class="fo-tablehead"><span>موضوع التوجيه</span><span>الجهة المسؤولة</span><span>الاستحقاق</span><span>الحالة</span><span></span></div>' + list.map(d => {
     const meeting = S.meetings.find(m => m.id === d.meetingId);
-    return '<button type="button" class="fo-row" onclick="openDirective(' + followArg(d.id) + ')"><span class="fo-rowtitle"><strong>' + esc(d.title) + '</strong><small>' + esc(meeting ? meeting.title : 'صادر عن مكتب معالي الوزير') + '</small></span><span class="fo-owner">' + esc(d.owner) + '</span><span class="fo-deadline' + (d.deadline < today && d.status !== 'مكتمل' ? ' late' : '') + '">' + followDate(d.deadline) + '</span><span>' + followStatus(d.status) + '</span><span class="fo-rowchev">' + followIcon('chevron', 15) + '</span></button>';
+    return '<button type="button" class="fo-row" onclick="openDirective(' + followArg(d.id) + ')"><span class="fo-rowtitle"><strong>' + esc(d.title) + '</strong><small>' + esc(meeting ? meeting.title : 'صادر عن المكتب التنفيذي') + '</small></span><span class="fo-owner">' + esc(d.owner) + '</span><span class="fo-deadline' + (d.deadline < today && d.status !== 'مكتمل' ? ' late' : '') + '">' + followDate(d.deadline) + '</span><span>' + followStatus(d.status) + '</span><span class="fo-rowchev">' + followIcon('chevron', 15) + '</span></button>';
   }).join('') + '</div>';
 }
 function followOwners() {
@@ -110,8 +110,10 @@ function newDirective(defaults = {}) {
   const m = S.meetings.find(x => x.id === sourceId);
   const linkedSource = Boolean(defaults.sourceText && m);
   const list = linkedSource ? [m] : defaults.councilId ? S.meetings.filter(x => x.councilId === defaults.councilId) : S.meetings;
-  const form = '<form class="fo-form" onsubmit="followSaveNewDirective(event)"><input type="hidden" name="sourceText" value="' + esc(defaults.sourceText || '') + '"><input type="hidden" name="councilId" value="' + esc(defaults.councilId || '') + '"><label class="field">نص التوجيه<textarea required maxlength="400" name="title" rows="3" placeholder="حدّد الإجراء المطلوب من الجهة">' + esc(defaults.title || '') + '</textarea></label><div class="fo-formgrid">' + followOwnerField(defaults.owner || m?.sector || '') + '<label class="field">تاريخ الاستحقاق<input required name="deadline" type="date" value="' + followDeadline(7) + '"></label></div><div class="fo-formgrid"><label class="field">الأولوية<select name="priority">' + followOptions(officeFollow.priorities, defaults.priority || 'متوسطة') + '</select></label><label class="field">الاجتماع المرتبط<select name="meetingId">' + (linkedSource ? '' : '<option value="">توجيه مباشر</option>') + list.map(x => '<option value="' + esc(x.id) + '"' + (sourceId === x.id ? ' selected' : '') + '>' + esc(x.title) + '</option>').join('') + '</select></label></div><div class="fo-actions"><button class="btn primary" type="submit">' + followIcon('check', 17) + 'إصدار التوجيه</button><button class="btn secondary" type="button" onclick="closeModal()">إلغاء</button></div></form>';
-  modal('إصدار توجيه جديد', form);
+  const deadline = defaults.aiDraft ? (/^\d{4}-\d{2}-\d{2}$/.test(defaults.deadline || '') ? defaults.deadline : '') : followDeadline(7);
+  const dueHint = defaults.aiDraft && defaults.deadline && !deadline ? '<small>الموعد كما ورد في النص: '+esc(defaults.deadline)+'</small>' : '';
+  const form = '<form class="fo-form" onsubmit="followSaveNewDirective(event)"><input type="hidden" name="sourceLabel" value="' + esc(defaults.aiSourceLabel || '') + '"><input type="hidden" name="sourceText" value="' + esc(defaults.sourceText || '') + '"><input type="hidden" name="councilId" value="' + esc(defaults.councilId || '') + '"><label class="field">نص التوجيه<textarea required maxlength="400" name="title" rows="3" placeholder="حدّد الإجراء المطلوب من الجهة">' + esc(defaults.title || '') + '</textarea></label><div class="fo-formgrid">' + followOwnerField(defaults.owner || (defaults.aiDraft ? '' : m?.sector) || '') + '<label class="field">تاريخ الاستحقاق<input required name="deadline" type="date" value="' + esc(deadline) + '">' + dueHint + '</label></div><div class="fo-formgrid"><label class="field">الأولوية<select name="priority">' + followOptions(officeFollow.priorities, defaults.priority || 'متوسطة') + '</select></label><label class="field">الاجتماع المرتبط<select name="meetingId">' + (linkedSource ? '' : '<option value="">توجيه مباشر</option>') + list.map(x => '<option value="' + esc(x.id) + '"' + (sourceId === x.id ? ' selected' : '') + '>' + esc(x.title) + '</option>').join('') + '</select></label></div><div class="fo-actions"><button class="btn primary" type="submit">' + followIcon('check', 17) + 'إصدار التوجيه</button><button class="btn secondary" type="button" onclick="closeModal()">إلغاء</button></div></form>';
+  modal(defaults.aiDraft ? 'مراجعة التوجيه المقترح' : 'إصدار توجيه جديد', form);
 }
 function followSaveNewDirective(event) {
   event.preventDefault();
@@ -119,9 +121,13 @@ function followSaveNewDirective(event) {
   const title = fields.get('title').trim(), owner = fields.get('owner').trim();
   if (!title || !owner) return toast('أدخل نص التوجيه واسم الجهة المسؤولة.');
   const meetingId = fields.get('meetingId');
+  const sourceText = fields.get('sourceText');
+  const duplicate = sourceText && S.directives.find(d => d.sourceText === sourceText && (d.meetingId || '') === (meetingId || ''));
+  if(duplicate){openDirective(duplicate.id);toast('هذا التوجيه مسجّل بالفعل.');return;}
   const councilId = S.meetings.find(x => x.id === meetingId)?.councilId || fields.get('councilId') || '';
   const d = {id: 'dir-' + crypto.randomUUID(), title, owner, deadline: fields.get('deadline'), priority: fields.get('priority'), status: 'بانتظار البدء', meetingId, councilId, history: [{date: today, text: 'أُصدر التوجيه وأُسند إلى ' + owner + '.'}]};
   if (fields.get('sourceText')) d.sourceText = fields.get('sourceText');
+  if (d.sourceText && fields.get('sourceLabel')) d.sourceLabel = fields.get('sourceLabel');
   S.directives.unshift(d);
   officeFollow.directiveFilter = 'الكل';
   persist();
@@ -139,8 +145,8 @@ function openDirective(id) {
   const meeting = S.meetings.find(m => m.id === d.meetingId);
   const items = (d.history || []).slice().reverse();
   const history = items.length ? items.map(h => '<li><strong>' + esc(typeof h === 'string' ? h : h.text || h.note || h.status || '') + '</strong>' + (h.date ? '<small>' + followDate(h.date.slice(0, 10)) + '</small>' : '') + '</li>').join('') : '<li><strong>الجهة المكلّفة بالتنفيذ</strong><small>' + esc(d.owner) + '</small></li>';
-  const source = meeting ? '<button class="fo-link" onclick="openMeeting(' + followArg(meeting.id) + ')">' + esc(meeting.title) + ' ' + followIcon('chevron', 13) + '</button>' : 'مكتب معالي الوزير';
-  modal('تفاصيل التوجيه', '<article class="fo-detail"><div class="fo-topline">' + followStatus(d.status) + (followHigh(d) ? '<span class="fo-priority">' + followIcon('flag', 14) + 'أولوية عالية</span>' : '') + '</div><h3>' + esc(d.title) + '</h3><div class="fo-props">' + followDetailField('الجهة المسؤولة', esc(d.owner), 'building') + followDetailField('تاريخ الاستحقاق', followDate(d.deadline), 'calendar') + '</div><div class="fo-source"><span>' + followIcon('doc', 16) + 'مصدر التوجيه</span>' + source + '</div>' + (d.sourceText ? '<h4>النص المستخرج من المحضر</h4><p class="fo-note">' + esc(d.sourceText) + '</p>' : '') + (d.note ? '<p class="fo-note">' + esc(d.note) + '</p>' : '') + '<h4>سجل المتابعة</h4><ol class="fo-history">' + history + '</ol><div class="fo-actions"><button class="btn primary" onclick="followEditDirective(' + followArg(id) + ')">' + followIcon('edit', 17) + 'تحديث التوجيه</button></div></article>');
+  const source = meeting ? '<button class="fo-link" onclick="openMeeting(' + followArg(meeting.id) + ')">' + esc(meeting.title) + ' ' + followIcon('chevron', 13) + '</button>' : (d.sourceText ? 'النص المرفق بالتوجيه' : 'المكتب التنفيذي');
+  modal('تفاصيل التوجيه', '<article class="fo-detail"><div class="fo-topline">' + followStatus(d.status) + (followHigh(d) ? '<span class="fo-priority">' + followIcon('flag', 14) + 'أولوية عالية</span>' : '') + '</div><h3>' + esc(d.title) + '</h3><div class="fo-props">' + followDetailField('الجهة المسؤولة', esc(d.owner), 'building') + followDetailField('تاريخ الاستحقاق', followDate(d.deadline), 'calendar') + '</div><div class="fo-source"><span>' + followIcon('doc', 16) + 'مصدر التوجيه</span>' + source + '</div>' + (d.sourceText ? '<h4>النص المصدر</h4>' + (d.sourceLabel ? '<small>'+esc(d.sourceLabel)+'</small>' : '') + '<p class="fo-note">' + esc(d.sourceText) + '</p>' : '') + (d.note ? '<p class="fo-note">' + esc(d.note) + '</p>' : '') + '<h4>سجل المتابعة</h4><ol class="fo-history">' + history + '</ol><div class="fo-actions"><button class="btn primary" onclick="followEditDirective(' + followArg(id) + ')">' + followIcon('edit', 17) + 'تحديث التوجيه</button></div></article>');
 }
 function followEditDirective(id) {
   const d = S.directives.find(x => x.id === id);
@@ -288,6 +294,6 @@ function ministerPage() {
   const topics = filter === 'قائمتي' ? all.filter(x => followWatch().includes(x.key)) : filter === 'كل المواضيع' ? all : all.filter(x => x.featured);
   const next = upcoming[0];
   const call = next ? '<div class="fo-minnext"><div><small>الاجتماع القادم في الجدول</small><h2>' + esc(next.title) + '</h2><p>' + followIcon('calendar', 16) + followDate(next.date) + ' <bdi>' + esc(next.time) + '</bdi> · ' + esc(next.location || next.sector) + '</p></div><button class="btn secondary" onclick="openMeeting(' + followArg(next.id) + ')">' + followIcon('doc',17) + 'عرض ملف الاجتماع</button></div>' : '';
-  return '<div class="fo-page">' + followHead('واجهة معالي الوزير', 'تابع الموضوعات التي تتطلب عنايتكم، وأصدر توجيهًا مباشرًا إلى الجهة المختصة.', '<button class="btn primary" onclick="newDirective()">' + followIcon('add') + 'إصدار توجيه</button>') + call +
+  return '<div class="fo-page">' + followHead('موجز القيادة', 'راجع الموضوعات ذات الأولوية وأصدر التوجيهات إلى الجهات المختصة.', '<button class="btn primary" onclick="newDirective()">' + followIcon('add') + 'إصدار توجيه</button>') + call + officeBriefInsights(upcoming.filter(m => m.date === today)) +
     '<div class="fo-minlayout"><section class="panel fo-panel"><div class="fo-sectionhead"><h2>الموضوعات المهمة</h2></div><div class="fo-tabs">' + ['الأولويات','قائمتي','كل المواضيع'].map(x => followTab(x,filter,'followMinisterFilter',x === 'قائمتي' ? followWatch().length : undefined)).join('') + '</div><div class="fo-minlist">' + (topics.map(followMinisterItem).join('') || followEmpty(filter === 'قائمتي' ? 'احفظ موضوعًا عبر رمز الإشارة المرجعية ليظهر هنا.' : 'لا توجد مواضيع تتطلب المتابعة حاليًا.', 'book')) + '</div></section><section class="panel fo-panel"><div class="fo-sectionhead"><h2>متابعة التنفيذ</h2></div><div class="fo-min-summary"><p><span>توجيهات مفتوحة</span><strong>' + n(active.length) + '</strong></p><p><span>تستحق المتابعة</span><strong>' + n(active.filter(followSoon).length) + '</strong></p><p><span>توجيهات مكتملة</span><strong>' + n(S.directives.length - active.length) + '</strong></p><button class="fo-link" onclick="go(\'directives\')">فتح سجل التوجيهات ' + followIcon('chevron',14) + '</button></div></section></div></div>';
 }

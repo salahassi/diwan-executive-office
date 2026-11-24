@@ -79,3 +79,17 @@
 .meet-filepick{position:relative;cursor:pointer;overflow:hidden}.meet-filepick input{opacity:0;position:absolute;inset:0;width:100%;cursor:pointer}.meet-filepick:focus-within{outline:2px solid var(--meet-deep);outline-offset:2px}
 .meet-materials>.meet-subtle{font-size:.8rem}.meet-materials [role=status]{font-size:.85rem;line-height:1.8;color:var(--meet-deep)}.meet-document{border:1px solid var(--meet-line);border-radius:8px;padding:9px 11px;margin:8px 0}.meet-document summary{cursor:pointer;line-height:1.8;font-size:.9rem}.meet-document summary>span{display:inline-flex;align-items:center;gap:7px;vertical-align:middle;overflow-wrap:anywhere}.meet-document summary small{margin-inline-start:10px;color:var(--meet-muted)}.meet-source-excerpt{border-top:1px solid var(--meet-line);padding-top:8px;margin-top:8px}.meet-source-excerpt p{white-space:pre-line;overflow-wrap:anywhere;font-size:.85rem}.meet-source-excerpt b,.meet-file-results small{font-size:.81rem}.meet-file-results{margin-top:12px}.meet-file-results .meet-finding{margin-top:7px}
 .meet-import-note{margin:11px 0!important;line-height:1.85;font-size:.85rem}.meet-import-list{margin:12px 0}.meet-import-row{display:flex;align-items:center;gap:11px;padding:11px 0;border-block-start:1px solid var(--meet-line);cursor:pointer}.meet-import-row input{width:17px;height:17px;accent-color:var(--meet-deep);flex:none}.meet-import-row>span:nth-child(2){display:grid;gap:4px;flex:1;min-width:0}.meet-import-row b{font-size:.9rem}.meet-import-row small{font-size:.79rem;color:var(--meet-muted)}
+
+.meet-ai-shortcut { margin: 12px 0; }
+.meet-ai-counts { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 16px; }
+.meet-ai-counts span { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; color: #25534f; background: #e9f3f0; border-radius: 7px; font-size: 0.9rem; }
+.meet-candidate { display: flex; align-items: center; gap: 12px; justify-content: space-between; padding: 13px 0; border-top: 1px solid #dfe5e4; }
+.meet-candidate p { margin: 4px 0; }
+.meet-candidate small { color: #53696a; }
+.meet-brief-source { padding-inline-start: 20px; margin: 8px 0 16px; }
+.meet-minute-result h4 { margin: 12px 0 5px; }
+.meet-candidate .meet-link { flex-shrink: 0; }
+@media (max-width: 500px) { .meet-candidate { align-items: start; flex-direction: column; } }
+.meet-comparison-proof { margin-top: 10px; font-size: .9rem; }
+.meet-comparison-proof summary { cursor: pointer; color: #285d56; }
+.meet-comparison-proof blockquote { margin: 10px 0; padding: 0 12px; border-inline-start: 2px solid #b6cfc3; }
