@@ -2,18 +2,40 @@
 const today = '2026-11-25';
 const storeKey = 'diwan-executive-v1';
 let S = (() => { try { const saved=JSON.parse(localStorage.getItem(storeKey)); if (saved && ['meetings','directives','councils'].every(k=>Array.isArray(saved[k]))) return upgradeDemoContent(saved); } catch {} return seedState(); })();
-function upgradeDemoContent(state){
- const seed=seedState(), originalTitle='معالي الوزير';
- for(const meeting of state.meetings){
-   const original=seed.meetings.find(m=>m.id===meeting.id);
-   if(!original)continue;
-   if(original.transcript && meeting.transcript==null)meeting.transcript=original.transcript;
-   if(original.comparisonSources && !meeting.comparisonSources)meeting.comparisonSources=original.comparisonSources;
-   if(original.people.includes('وزير البلديات والإسكان') && Array.isArray(meeting.people))meeting.people=meeting.people.map(p=>p===originalTitle?'وزير البلديات والإسكان':p);
-   if(meeting.id==='m-infrastructure'&&meeting.summary===original.summary.replace('تحدد اللجنة ترتيب مراحل التنفيذ.','يُعرض على معاليه ترتيب مراحل التنفيذ.'))meeting.summary=original.summary;
- }
- for(const council of state.councils){
-   if(council.chair===originalTitle&&seed.councils.some(c=>c.id===council.id&&c.chair==='وزير البلديات والإسكان'))council.chair='وزير البلديات والإسكان';
+function upgradeDemoContent(state) {
+ const seed = seedState();
+ for (const [group, rows] of Object.entries(legacyDemoFields)) {
+   for (const record of state[group]) {
+     const previous = rows[record.id];
+     if (!previous) continue;
+     const revised = seed[group].find(row => row.id === record.id);
+     if (!revised) continue;
+     if (record.chair === 'معالي الوزير' && revised.chair === 'رئيس الجهة') record.chair = revised.chair;
+     if (Array.isArray(record.people) && revised.people?.includes('رئيس الجهة'))
+       record.people = record.people.map(p => p === 'معالي الوزير' ? 'رئيس الجهة' : p);
+     if (record.id === 'm-infrastructure' && record.summary === previous.summary?.replace('تحدد اللجنة ترتيب مراحل التنفيذ.', 'يُعرض على معاليه ترتيب مراحل التنفيذ.')) record.summary = revised.summary;
+     for (const key of Object.keys(previous)) {
+       const before = previous[key], after = revised[key];
+       if (Array.isArray(before) && Array.isArray(after) && Array.isArray(record[key])) {
+         // Match original members and outputs by value so reordering or appending stays intact.
+         record[key] = record[key].map(value => {
+           const index = before.findIndex(old => JSON.stringify(old) === JSON.stringify(value));
+           return index >= 0 ? after[index] : value;
+         });
+       } else if (JSON.stringify(record[key]) === JSON.stringify(before)) record[key] = after;
+     }
+     if (record.id === 'm-housing') {
+       const oldNote = 'استعرضت اللجنة نسب الإنجاز للدفعة الأولى واختلاف بيانات العرض عن نتائج التحقق الميداني.\nوجّه معالي الوزير قطاع الإسكان بمطابقة نسب إنجاز الدفعة الأولى مع تقرير التحقق الميداني ورفع النسبة المعتمدة قبل تثبيت موعد التسليم.';
+       if (record.minutes === previous.transcript || record.minutes === oldNote) {
+         record.minutes = revised.transcript;
+         delete record.minuteReview;
+         delete record.extractionDone;
+         delete record.extracted;
+       }
+       if (record.transcript == null) record.transcript = revised.transcript;
+       if (record.comparisonSources == null) record.comparisonSources = revised.comparisonSources;
+     }
+   }
  }
  return state;
 }
@@ -74,7 +96,7 @@ function overlapping(m){const a=minutes(m.time);return S.meetings.find(v=>v.id!=
 function attention(){const list=[];const conflicts=S.meetings.filter(m=>m.invite==='pending'&&overlapping(m));if(conflicts.length)list.push({key:'cl-'+conflicts[0].id,title:'تعارض في جدول المواعيد',sub:conflicts[0].title,tone:'amber',icon:'conflict',meta:'جدولة',act:()=>openMeeting(conflicts[0].id,'invite')});const finding=meetingsToday().find(m=>m.finding)||S.meetings.find(m=>m.finding&&m.date>=today&&m.invite!=='declined');if(finding)list.push({key:'fi-'+finding.id,title:'تباين في بيانات العرض',sub:finding.title,tone:'violet',icon:'sparkles',meta:'تحليل المحتوى',act:()=>openMeeting(finding.id,'analysis')});const late=overdue();if(late.length)list.push({key:'du-'+late[0].id,title:'توجيه تجاوز موعد التنفيذ',sub:late[0].title,tone:'rose',icon:'flag',meta:'متابعة',act:()=>openDirective(late[0].id)});return list;}
 function attendClick(i){attention()[i]?.act();}
 function navBtn(key){return '<button class="nav-item '+(view===key?'active':'')+'" '+(view===key?'aria-current="page" ':'')+'onclick="go(\''+key+'\')">'+icon(routeIcon[key],21)+'<span>'+routes[key]+'</span></button>';}
-function renderShell(){document.getElementById('rail').innerHTML='<div class="rail-inner"><a class="brand" href="#home" onclick="toggleNav(false)"><img src="mark.svg" width="44" height="48" alt=""><div><b>ديوان</b><small>المكتب التنفيذي</small></div></a><div class="nav-sect">مساحة العمل</div><nav>'+['home','ai','schedule','content','directives','councils'].map(navBtn).join('')+'</nav><div class="nav-line"></div><div class="nav-sect">الوصول السريع</div><nav>'+navBtn('minister')+'</nav><div class="rail-bottom"><div class="profile"><span class="avatar">'+icon('user',21)+'</span><div><strong>مدير المكتب</strong><small>وزارة البلديات والإسكان</small></div></div></div></div>';
+function renderShell(){document.getElementById('rail').innerHTML='<div class="rail-inner"><a class="brand" href="#home" onclick="toggleNav(false)"><img src="mark.svg" width="44" height="48" alt=""><div><b>ديوان</b><small>المكتب التنفيذي</small></div></a><div class="nav-sect">مساحة العمل</div><nav>'+['home','ai','schedule','content','directives','councils'].map(navBtn).join('')+'</nav><div class="nav-line"></div><div class="nav-sect">الوصول السريع</div><nav>'+navBtn('minister')+'</nav><div class="rail-bottom"><div class="profile"><span class="avatar">'+icon('user',21)+'</span><div><strong>مدير المكتب</strong><small>المكتب التنفيذي</small></div></div></div></div>';
 const act=attention();const unread=act.some(a=>!(S.readAlerts||[]).includes(a.key));document.getElementById('topbar').innerHTML='<div class="crumb"><button id="mobileNavBtn" onclick="toggleNav()" class="iconbtn menu-toggle" aria-label="فتح القائمة" aria-controls="rail" aria-expanded="false">'+icon('menu')+'</button><span class="crumb-home">مساحة العمل</span><i class="crumb-divider">/</i><strong>'+routes[view]+'</strong></div><div class="tools"><span class="header-date">'+icon('calendar',16)+'الأربعاء، 25 نوفمبر 2026</span><span class="tool-divider"></span><button class="iconbtn" title="بحث" aria-label="بحث في ديوان" onclick="openSearch()">'+icon('search')+'</button><button class="iconbtn notif" title="الإشعارات" aria-label="الإشعارات" onclick="showAlerts()">'+icon('bell')+(unread?'<i></i>':'')+'</button></div>';}
 function render(){renderShell();const pages={home:homePage,schedule:schedulePage,content:contentPage,directives:directivesPage,councils:councilsPage,minister:ministerPage,ai:aiPage};document.getElementById('main').innerHTML=pages[view]();document.title=routes[view]+' | ديوان';}
 function showAlerts(){const items=attention();S.readAlerts=[...new Set([...(S.readAlerts||[]),...items.map(a=>a.key)])];persist();renderShell();modal('إشعارات المكتب',items.length?'<div class="alertlist">'+items.map(actionRow).join('')+'</div>':'<div class="empty">لا توجد إشعارات تستدعي المتابعة.</div>');}
@@ -120,7 +142,7 @@ function homeAITools(){
  return '<section class="home-ai" aria-labelledby="homeAIHeading"><div class="home-ai-heading"><span class="home-ai-symbol">'+icon('sparkles',19)+'</span><h2 id="homeAIHeading">أدوات الذكاء الاصطناعي</h2></div><div class="home-ai-tools">'+tools.map(t=>'<button onclick="'+t.click+'"><span class="home-ai-tool-icon">'+icon(t.symbol,19)+'</span><span><b>'+t.title+'</b><small>'+t.detail+'</small></span></button>').join('')+'</div></section>';
 }
 function homePage(){const ms=meetingsToday(),act=attention(),open=activeDirectives(),late=overdue(),findings=ms.filter(m=>m.finding).length,pending=S.meetings.filter(m=>m.invite==='pending').length,hold=Math.round(ms.reduce((v,m)=>v+Number(m.duration),0));const totalDocs=S.meetings.filter(m=>!['pending','declined'].includes(m.invite)&&m.summary).length;
-return '<section class="hero"><img class="hero-art" src="riyadh.webp" alt=""><div class="hero-content"><div class="hero-kicker"><i></i>الإحاطة الصباحية</div><h1>لوحة المكتب التنفيذي</h1><p>اجتماعات اليوم والقرارات التي تتطلب متابعة في وزارة البلديات والإسكان.</p><button class="hero-btn" onclick="openDailyBrief(\'day\',today)">'+icon('notes',17)+'عرض الموجز اليومي</button></div></section>'+
+return '<section class="hero"><img class="hero-art" src="riyadh.webp" alt=""><div class="hero-content"><div class="hero-kicker"><i></i>الإحاطة الصباحية</div><h1>لوحة المكتب التنفيذي</h1><p>اجتماعات اليوم والقرارات التي تتطلب متابعة.</p><button class="hero-btn" onclick="openDailyBrief(\'day\',today)">'+icon('notes',17)+'عرض الموجز اليومي</button></div></section>'+
 homeAITools()+'<div class="section-label"><span></span><h2>المؤشرات الرئيسية</h2></div><section class="stats" aria-label="المؤشرات الرئيسية">'+homeStat('اجتماعات اليوم',ms.length,hold+' دقيقة مجدولة','calendar','mint','schedule')+homeStat('التوجيهات النشطة',open.length,late.length===2?'توجيهان تجاوزا موعد التنفيذ':late.length===1?'توجيه واحد تجاوز موعد التنفيذ':late.length?n(late.length)+' توجيهات تجاوزت موعد التنفيذ':'جميع التوجيهات ضمن الموعد','checklist','blue','directives')+homeStat('ملفات الاجتماعات',totalDocs,findings===1?'ملف واحد يحتاج إلى مراجعة':findings?n(findings)+' ملفات تحتاج إلى مراجعة':'اكتملت مراجعة ملفات اليوم','files','violet','content')+homeStat('المجالس واللجان',S.councils.length,S.councils.filter(c=>c.type==='داخلي').length+' داخلية · '+S.councils.filter(c=>c.type==='خارجي').length+' خارجية','building','amber','councils')+'</section>'+
 '<div class="primary-grid"><section class="panel daypanel"><div class="panel-heading"><div><div class="panel-kicker"><span></span>الجدولة الذكية</div><h2>اجتماعات اليوم</h2></div><button class="panel-link" onclick="go(\'schedule\')">عرض الجدول</button></div><div class="agenda-list">'+(ms.length?ms.map(homeMeeting).join(''):'<div class="empty">لا توجد اجتماعات مؤكدة لهذا اليوم.</div>')+'</div></section><section class="panel attentionpanel"><div class="panel-heading"><div><div class="panel-kicker sand"><span></span>أولويات المكتب</div><h2>يتطلب انتباهك</h2></div><span class="count-badge" aria-label="عدد التنبيهات">'+act.length+'</span></div><div class="alertlist">'+(act.length?act.map(actionRow).join(''):'<div class="empty">لا توجد عناصر تستدعي المتابعة.</div>')+'</div><button class="allalerts" onclick="showAlerts()">'+icon('bell',15)+'عرض الإشعارات</button></section></div>'+
 '<div class="secondary-grid">'+homeTimePanel()+'<section class="panel status-panel"><div class="panel-heading"><div><h2>حالة تنفيذ التوجيهات</h2><p>توزيع التوجيهات حسب حالة التنفيذ</p></div><span class="mini-icon">'+icon('checklist',20)+'</span></div>'+directiveSummary()+'</section></div>';}
